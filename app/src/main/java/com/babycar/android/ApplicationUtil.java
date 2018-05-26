@@ -5,18 +5,20 @@ import android.app.Application;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 public class ApplicationUtil extends Application {
 
     private Socket socket;
-    private DataOutputStream out = null;
-    private DataInputStream in = null;
+    private OutputStream out = null;
+    private InputStream in = null;
 
     public void init(String HOST,int PORT) throws IOException, Exception{
         this.socket = new Socket(HOST,PORT);
-        this.out = new DataOutputStream(socket.getOutputStream());
-        this.in = new DataInputStream(socket.getInputStream());
+        this.out = socket.getOutputStream();
+        this.in = socket.getInputStream();
     }
 
     public Socket getSocket() {
@@ -27,19 +29,19 @@ public class ApplicationUtil extends Application {
         this.socket = socket;
     }
 
-    public DataOutputStream getOut() {
+    public OutputStream getOut() {
         return out;
     }
 
-    public void setOut(DataOutputStream out) {
+    public void setOut(OutputStream out) {
         this.out = out;
     }
 
-    public DataInputStream getIn() {
+    public InputStream getIn() {
         return in;
     }
 
-    public void setIn(DataInputStream in) {
+    public void setIn(InputStream in) {
         this.in = in;
     }
 }
