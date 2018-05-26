@@ -14,6 +14,10 @@
     <uses-permission android:name="android.permission.READ_PROFILE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <!-- 定位需要的权限 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:name=".ApplicationUtil"
         android:allowBackup="true"
@@ -33,14 +37,17 @@
 
         </activity>
 
-        <activity
-            android:name=".ControlActivty">
+        <activity android:name=".ControlActivty"
+            android:screenOrientation="landscape">
+            <!--android:theme="@android:style/Theme.NoTitleBar"-->
 
         </activity>
-
-        <activity
-            android:name=".ShowInfoActivity">
-
+        <activity android:name=".ShowInfoActivity">
+        </activity>
+        <activity android:name=".MonitorActivity"
+            android:screenOrientation="landscape" >
+        </activity>
+        <activity android:name=".VideoActivity">
         </activity>
     </application>
 

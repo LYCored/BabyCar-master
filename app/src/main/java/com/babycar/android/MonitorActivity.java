@@ -37,7 +37,6 @@ public class MonitorActivity extends Activity implements Runnable{
 
         ApplicationUtil apputil = (ApplicationUtil)MonitorActivity.this.getApplication();
         out = new BufferedWriter(new OutputStreamWriter(apputil.getOut()));
-
         final SurfaceView surface = (SurfaceView)findViewById(R.id.surface_monitor);
         surface.setKeepScreenOn(true);
         mythread = new Thread(this);
@@ -57,8 +56,8 @@ public class MonitorActivity extends Activity implements Runnable{
     }
 
     private void draw(){
-        //getSeverIP
-        String url = "";
+
+        String url = "http://192.168.43.104:8080/?action=stream";
         Canvas canvas;
         URL videoUrl;
         HttpURLConnection httpURLConnection;

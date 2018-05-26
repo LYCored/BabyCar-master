@@ -2,14 +2,22 @@ package com.babycar.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.RectF;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -17,38 +25,57 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
 
-public class ControlActivty extends Activity implements Runnable{
+import static android.content.ContentValues.TAG;
 
-    private SurfaceHolder holder;
+public class ControlActivty extends Activity {
+
+    //private SurfaceHolder holder;
+    private SurfaceView surface;
     private Thread mythread;
+    private Thread checkThread;
 
     private int width,height;
     private Socket socket;
-    private DataOutputStream out;
-    private DataInputStream in;
+    private OutputStream out;
     private Boolean connect_success;
     public static String url;
+    private SurfaceHolder holder;
+    private Canvas canvas;
+    private ApplicationUtil appUtil;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_control_activty);
+        setContentView(R.layout.activity_control);
+        ((Button)findViewById(R.id.Button_stop)).setOnClickListener(stopHandler);
+        ((Button)findViewById(R.id.Button_up)).setOnClickListener(upHandler);
+        ((Button)findViewById(R.id.Button_down)).setOnClickListener(downHandler);
+        ((Button)findViewById(R.id.Button_left)).setOnClickListener(leftHandler);
+        ((Button)findViewById(R.id.Button_right)).setOnClickListener(rightHandler);
+        ((Button)findViewById(R.id.Button_model)).setOnClickListener(modelHandler);
+        appUtil = (ApplicationUtil)ControlActivty.this.getApplication();
+        socket = appUtil.getSocket();
+        out = appUtil.getOut();
+        //InitHandler();
+        (checkThread = new Thread(CheckNetWork)).start();
 
-        ApplicationUtil apputil = (ApplicationUtil)ControlActivty.this.getApplication();
-        socket = apputil.getSocket();
-
-        InitHandler();
-
-        final SurfaceView surface = (SurfaceView)findViewById(R.id.C_sufaceview);
+        surface = (SurfaceView)findViewById(R.id.C_sufaceview);
         surface.setKeepScreenOn(true);
-        mythread = new Thread(this);
+
+        mythread = new Thread(runnable);
         holder = surface.getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -66,11 +93,11 @@ public class ControlActivty extends Activity implements Runnable{
 
     private void draw(){
         //getSeverIP
-        String url = "";
-        Canvas canvas;
+        String url = "http://192.168.43.104:8080/?action=snapshot";
         URL videoUrl;
         HttpURLConnection httpURLConnection;
         Bitmap bmp;
+        //Paint p = new Paint();
         try{
             InputStream inputStream = null;
             videoUrl = new URL(url);
@@ -87,18 +114,112 @@ public class ControlActivty extends Activity implements Runnable{
             httpURLConnection.disconnect();
         }catch (Exception e1){
             Toast.makeText(ControlActivty.this,"视频传输出现错误,返回上一级",Toast.LENGTH_LONG).show();
+            holder.unlockCanvasAndPost(canvas);
             finish();
-        }finally {
+        }/*finally {
             Toast.makeText(ControlActivty.this,"请检查是否因为网络问题导致视频传输错误",Toast.LENGTH_LONG).show();
-            finish();
-        }
+            //finish();
+        }*/
     }
 
-    public void run(){
-        while (true){
-            draw();
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+
+            while (true){
+                    //draw();
+            }
         }
-    }
+    };
+
+    //check server message
+    Runnable CheckNetWork = new Runnable() {
+        @Override
+        public void run() {
+            try{
+                while(true){
+                    //Notification setting
+                    long[] vir = {100,200,300,400};
+                    Intent intent = new Intent(ControlActivty.this,LoginActivity.class);
+                    PendingIntent pi = PendingIntent.getActivity(ControlActivty.this,0,intent,0);
+                    NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    Notification notification;
+                    //socket setting
+                    //socket.sendUrgentData(0xff);
+                    InputStream is = socket.getInputStream();
+                    InputStreamReader isr = new InputStreamReader(is);
+                    BufferedReader br = new BufferedReader(isr);
+                    String serverMsg = br.readLine();
+                    Log.e("testtool","test!!!!!");
+                    switch (serverMsg){
+                        case "119":
+                            notification = new NotificationCompat.Builder(ControlActivty.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("火焰警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"112":
+                            notification = new NotificationCompat.Builder(ControlActivty.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("气体警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"110":
+                            notification = new NotificationCompat.Builder(ControlActivty.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("声音警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"116":
+                            notification = new NotificationCompat.Builder(ControlActivty.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("气体警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                            default:
+                                Log.e("default", "unknown information!");
+                    }
+                    Thread.sleep(1*1000);
+                }
+            }catch (Exception e){
+                Log.e("catch","catch test!");
+                connect_success = false;
+                //mynoti();
+            }
+        }
+    };
 
     @Override
     public void onBackPressed() {
@@ -124,65 +245,112 @@ public class ControlActivty extends Activity implements Runnable{
 
     private OnClickListener stopHandler=new OnClickListener() {
         public void onClick(View v) {
-            String STOP = "STOP";
-            SendMessage(STOP);
+            char STOP = 'P';
+            SendMessage send = new SendMessage();
+            send.setMess(STOP);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
     private OnClickListener leftHandler=new OnClickListener() {
         public void onClick(View v) {
-            String LEFT = "LEFT";
-            SendMessage(LEFT);
+            char LEFT = 'a';
+            SendMessage send = new SendMessage();
+            send.setMess(LEFT);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
     private OnClickListener modelHandler=new OnClickListener() {
         public void onClick(View v) {
-            String TAB = "TAB";
-            SendMessage(TAB);
+            char TAB = 'T';
+            SendMessage send = new SendMessage();
+            send.setMess(TAB);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
     private OnClickListener rightHandler=new OnClickListener() {
         public void onClick(View v) {
-            String RIGHT = "RIGHT";
-            SendMessage(RIGHT);
+            char RIGHT = 'd';
+            SendMessage send = new SendMessage();
+            send.setMess(RIGHT);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
     private OnClickListener upHandler=new OnClickListener() {
         public void onClick(View v) {
-            String UP = "UP";
-            SendMessage(UP);
+            char UP = 'w';
+            SendMessage send = new SendMessage();
+            send.setMess(UP);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
     private OnClickListener downHandler=new OnClickListener() {
         public void onClick(View v) {
-            String DOWN = "DOWN";
-            SendMessage(DOWN);
+            char DOWN = 's';
+            SendMessage send = new SendMessage();
+            send.setMess(DOWN);
+            Thread t = new Thread(send);
+            t.start();
         }
     };
 
-    public void SendMessage(String mess){
+    public class SendMessage implements Runnable{
+        private char mess;
+        public void setMess(char mess)
+        {
+            this.mess = mess;
+        }
+        @Override
+        public void run(){
+            try{
+                //PrintWriter pw = new PrintWriter(out);
+                //pw.write(mess);
+                //pw.flush();
+                //pw.close();
+                out.write(mess);
+                out.flush();
+                //out.close();
+            }catch(Exception e1) {
+                Toast.makeText(ControlActivty.this, "网络连接错误，返回上一级", Toast.LENGTH_LONG).show();
+                connect_success = false;
+                Intent intent = new Intent();
+                intent.putExtra("data_return", connect_success);
+                setResult(RESULT_OK, intent);
+            //finish();
+            }
+        }
+    };
+    /*public void SendMessage(char mess){
         try{
-            PrintWriter pw = new PrintWriter(out);
-            pw.write(mess);
-            pw.flush();
-            pw.close();
-        }catch(Exception e1){
-            Toast.makeText(ControlActivty.this,"网络连接错误，返回上一级",Toast.LENGTH_LONG).show();
+            //PrintWriter pw = new PrintWriter(out);
+            //pw.write(mess);
+            //pw.flush();
+            //pw.close();
+            out.write(mess);
+            out.flush();
+            out.close();
+        }catch(Exception e1) {
+            Toast.makeText(ControlActivty.this, "网络连接错误，返回上一级", Toast.LENGTH_LONG).show();
             connect_success = false;
             Intent intent = new Intent();
-            intent.putExtra("data_return",connect_success);
-            setResult(RESULT_OK,intent);
-            finish();
+            intent.putExtra("data_return", connect_success);
+            setResult(RESULT_OK, intent);
+            //finish();
         }
-    }
+    }*/
     public void InitHandler(){
-        Intent intent = getIntent();
-        intent.getBooleanExtra("connect_success",connect_success);
-        ((Button)findViewById(R.id.Button_stop)).setOnClickListener(stopHandler);
-        ((Button)findViewById(R.id.Button_up)).setOnClickListener(upHandler);
-        ((Button)findViewById(R.id.Button_down)).setOnClickListener(downHandler);
-        ((Button)findViewById(R.id.Button_left)).setOnClickListener(leftHandler);
-        ((Button)findViewById(R.id.Button_right)).setOnClickListener(rightHandler);
-        ((Button)findViewById(R.id.Button_model)).setOnClickListener(modelHandler);
+        //Intent intent = getIntent();
+        //intent.getBooleanExtra("connect_success",connect_success);
+//        ((Button)findViewById(R.id.Button_stop)).setOnClickListener(stopHandler);
+//        ((Button)findViewById(R.id.Button_up)).setOnClickListener(upHandler);
+//        ((Button)findViewById(R.id.Button_down)).setOnClickListener(downHandler);
+//        ((Button)findViewById(R.id.Button_left)).setOnClickListener(leftHandler);
+//        ((Button)findViewById(R.id.Button_right)).setOnClickListener(rightHandler);
+//        ((Button)findViewById(R.id.Button_model)).setOnClickListener(modelHandler);
     }
  /*public void InitHandler() {
         // 获取wifi服务
