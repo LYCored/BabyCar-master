@@ -262,30 +262,30 @@ public class LoginActivity extends AppCompatActivity{
 
     private View.OnClickListener controlHandler=new View.OnClickListener() {
         public void onClick(View v) {
-            /*if(connect_success){*/
+            if(connect_success){
                 Intent intent = new Intent(LoginActivity.this,ControlActivty.class);
                 intent.putExtra("connect_success",connect_success);
                 startActivityForResult(intent,1);
-            /*}
+            }
             else{
                 Toast.makeText(LoginActivity.this,"还未连接或连接已断开，请连接后再使用该功能",Toast.LENGTH_LONG).show();
-            }*/
+            }
         }
     };
 
     private View.OnClickListener showinfoHandler=new View.OnClickListener() {
         public void onClick(View v) {
-            /*if(connect_success){*/
+            if(connect_success){
                 Intent intent = new Intent(LoginActivity.this,ShowInfoActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putBoolean("connect_success",connect_success);
                 bundle.putBoolean("permissionflag", permissionflag);
                 intent.putExtra("Data",bundle);
                 startActivityForResult(intent,1);
-            /*}
+            }
             else{
                 Toast.makeText(LoginActivity.this,"还未连接或连接已断开，请连接后再使用该功能",Toast.LENGTH_LONG).show();
-            }*/
+            }
         }
     };
 

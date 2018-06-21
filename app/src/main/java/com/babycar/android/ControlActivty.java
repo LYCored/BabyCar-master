@@ -49,12 +49,14 @@ public class ControlActivty extends Activity {
     private int width,height;
     private Socket socket;
     private OutputStream out;
+    private OutputStream videoOut;
     private Boolean connect_success;
     public static String url;
     private SurfaceHolder holder;
     private Canvas canvas;
     private ApplicationUtil appUtil;
 
+    private Socket videoSocket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +72,23 @@ public class ControlActivty extends Activity {
         socket = appUtil.getSocket();
         out = appUtil.getOut();
         //InitHandler();
+        /*try{
+            appUtil.initVSocket("192.168.43.206",8080);
+            videoOut = appUtil.getVOut();
+            Log.i("second socket","Running!");
+        }catch (Exception e1){
+            connect_success = false;
+            e1.printStackTrace();
+            Log.getStackTraceString(e1);
+            Log.e("second socket","Error!");
+        }*/
+
         (checkThread = new Thread(CheckNetWork)).start();
 
         surface = (SurfaceView)findViewById(R.id.C_sufaceview);
         surface.setKeepScreenOn(true);
 
-        mythread = new Thread(runnable);
+        mythread = new Thread(videoRunnable);
         holder = surface.getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -93,7 +106,7 @@ public class ControlActivty extends Activity {
 
     private void draw(){
         //getSeverIP
-        String url = "http://192.168.43.104:8080/?action=snapshot";
+        String url = "http://192.168.43.206:8080/?action=snapshot";
         URL videoUrl;
         HttpURLConnection httpURLConnection;
         Bitmap bmp;
@@ -105,15 +118,22 @@ public class ControlActivty extends Activity {
             httpURLConnection.setDoInput(true);
             httpURLConnection.connect();
             inputStream = httpURLConnection.getInputStream();
+            //InputStream inputStream = videoSocket.getInputStream();
+            Log.i("Test message","InputStream is correct!");
             bmp = BitmapFactory.decodeStream(inputStream);
+            Log.i("Test message","Bitmap is correct!");
             canvas = holder.lockCanvas();
+            Log.i("Test message","Lock Canvas is correct!");
             canvas.drawColor(Color.WHITE);
             RectF rectF = new RectF(0,0,width,height);
             canvas.drawBitmap(bmp,null,rectF,null);
+            Log.i("Test message","Drawer is correct!");
             holder.unlockCanvasAndPost(canvas);
-            httpURLConnection.disconnect();
+            Log.i("Test message","Display is correct!");
+            //httpURLConnection.disconnect();
         }catch (Exception e1){
             Toast.makeText(ControlActivty.this,"视频传输出现错误,返回上一级",Toast.LENGTH_LONG).show();
+            Log.i("Error message","Get Video Error!");
             holder.unlockCanvasAndPost(canvas);
             finish();
         }/*finally {
@@ -122,12 +142,12 @@ public class ControlActivty extends Activity {
         }*/
     }
 
-    Runnable runnable = new Runnable() {
+    Runnable videoRunnable = new Runnable() {
         @Override
         public void run() {
 
             while (true){
-                    //draw();
+                    draw();
             }
         }
     };

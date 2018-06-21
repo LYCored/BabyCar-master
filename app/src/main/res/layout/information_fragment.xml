@@ -16,7 +16,7 @@
             android:layout_height="match_parent">
 
             <include
-                layout="@layout/information_title"
+                layout="@layout/information_tempandhumi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
             </include>

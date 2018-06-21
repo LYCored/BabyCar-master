@@ -3,13 +3,20 @@ package com.babycar.android;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.location.Criteria;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.widget.TextView;
@@ -22,15 +29,20 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import javax.net.ssl.CertPathTrustManagerParameters;
+
 public class ShowInfoActivity extends Activity {
     private boolean permissionflag;
     private boolean connect_success;
     private Socket socket;
     private OutputStream out;
+    private InputStream is;
     private ApplicationUtil appUtil;
 
     private double latitude;
     private double longtitude;
+    private String temperature;
+    private String humidity;
     //private byte[] send;
 
     /**
@@ -47,21 +59,24 @@ public class ShowInfoActivity extends Activity {
 
         distance = (TextView) findViewById(R.id.distance_text);
 
-        /*try{*/
+        try{
             appUtil = (ApplicationUtil)ShowInfoActivity.this.getApplication();
             socket = appUtil.getSocket();
             out = appUtil.getOut();
-        /*}catch (Exception e1){
+            is = socket.getInputStream();
+        }catch (Exception e1){
             e1.printStackTrace();
-        }*/
+        }
 
+        Thread t3 = new Thread(CheckNetWork);
+        t3.start();
 
         Intent intent = getIntent();
         permissionflag = intent.getBundleExtra("Data").getBoolean("permissionflag",false);
         getBestLocation();
 
-        Thread t2 = new Thread(calculateLocation);
-        t2.start();
+        /*Thread t2 = new Thread(calculateLocation);
+        t2.start();*/
     }
 
     @Override
@@ -126,38 +141,27 @@ public class ShowInfoActivity extends Activity {
                 /**
                  * 发送位置
                  */
-                String sendLocation = Double.toString(latitude);
-                out.write('1');
+                /*String sendLocation = Double.toString(latitude);
+                out.write('e');
                 for (int i = 0; i < sendLocation.length(); i++){
                     out.write(sendLocation.charAt(i));
                 }
-                out.write('0');
-                out.write('1');
+                out.write('r');
+                out.write('e');
                 sendLocation = Double.toString(longtitude);
                 for (int i = 0; i < sendLocation.length(); i++){
                     out.write(sendLocation.charAt(i));
                 }
-                out.write('0');
-                /*
-                *//**
-                 * //接收位置
-                 *//*
-                float[] results = new float[1];
+                out.write('r');
                 InputStream is = socket.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
-                Log.e("test2","TEST!!!!!!!!!!!!");
-                double serverLatitude = Double.parseDouble(br.readLine());
-                double serverLongtitude;
-                if (serverLatitude == 0){
-                    Toast.makeText(ShowInfoActivity.this, "无法获取智能婴儿车的坐标!", Toast.LENGTH_LONG).show();
-                }
-                else {
-                    serverLongtitude = Double.parseDouble(br.readLine());
-                    Location.distanceBetween(latitude,longtitude,serverLatitude,serverLongtitude,results);
-                    distance.setText("" + results[0]);
-                }*/
+                String serverMsg = br.readLine();*/
+                /**
+                 * 接收位置
+                 */
             }catch(Exception e1){
+                Log.e("error","Error!!!!!!!!!!!!!!");
                 e1.printStackTrace();
             }
         }
@@ -177,17 +181,148 @@ public class ShowInfoActivity extends Activity {
                 //pw.flush();
                 //pw.close();
                 out.write(mess);
-                //out.write(String.valueOf(latitude).getBytes());
+                Log.e("test","sendMessage's running!!!!!");
                 out.flush();
                 //out.close();
             }catch(Exception e1) {
-                Log.e("test3","TEST!!!!!!!!!!!!");
                 Toast.makeText(ShowInfoActivity.this, "网络连接错误，返回上一级", Toast.LENGTH_LONG).show();
                 connect_success = false;
                 Intent intent = new Intent();
                 intent.putExtra("data_return", connect_success);
                 setResult(RESULT_OK, intent);
                 //finish();
+            }
+        }
+    };
+
+    //check server message
+    Runnable CheckNetWork = new Runnable() {
+        @Override
+        public void run() {
+            try{
+                while(true){
+                    //Notification setting
+                    long[] vir = {100,200,300,400};
+                    Intent intent = new Intent(ShowInfoActivity.this,LoginActivity.class);
+                    PendingIntent pi = PendingIntent.getActivity(ShowInfoActivity.this,0,intent,0);
+                    NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    Notification notification;
+                    //socket setting
+                    InputStreamReader isr = new InputStreamReader(is);
+                    BufferedReader br = new BufferedReader(isr);
+                    String serverMsg = br.readLine();
+
+                    switch (serverMsg){
+                        case "119":
+                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("火焰警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"112":
+                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("气体警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"110":
+                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("声音警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"116":
+                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("气体警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+                            break;
+                        case"115":
+                            float[] results = new float[1];
+                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                                    .setContentTitle("BabyCar Warning")
+                                    .setContentText("115警报")
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher))
+                                    .setContentIntent(pi)
+                                    .setSound(Uri.withAppendedPath(MediaStore.Audio.Media.INTERNAL_CONTENT_URI,"6"))
+                                    .setVibrate(vir)
+                                    .setAutoCancel(true)
+                                    .build();
+                            manager.notify(1,notification);
+
+                            char ack = '0';
+                            SendMessage sendMessage = new SendMessage();
+                            sendMessage.setMess(ack);
+                            Thread th1 = new Thread(sendMessage);
+                            th1.start();
+
+                            double serverLatitude = Double.parseDouble(br.readLine());
+                            Log.e("Latitude",Double.toString(serverLatitude));
+
+                            double serverLongtitude;
+                            if (serverLatitude == 0){
+                                //distance.setText(R.string.GPSSIGNAL);
+                            }
+                            else {
+                                Thread th2 = new Thread(sendMessage);
+                                th2.start();
+
+                                serverLongtitude = Double.parseDouble(br.readLine());
+                                Log.i("Longtitude",Double.toString(serverLongtitude));
+                                Location.distanceBetween(latitude,longtitude,serverLatitude,serverLongtitude,results);
+                                Log.i("distance",Double.toString(results[0]));
+                                distance.setText("" + results[0]);
+                            }
+                            Thread th3 = new Thread(sendMessage);
+                            th3.start();
+                            temperature = br.readLine();
+                            Log.i("Temperature",temperature);
+
+                            Thread th4 = new Thread(sendMessage);
+                            th4.start();
+                            humidity = br.readLine();
+                            Log.i("Humidity",humidity);
+
+                            break;
+                    }
+                    //  Thread.sleep(1*1000);
+                }
+            }catch (Exception e){
+                connect_success = false;
             }
         }
     };
