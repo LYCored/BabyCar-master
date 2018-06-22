@@ -17,11 +17,17 @@ public class ApplicationUtil extends Application {
     private OutputStream videoOut = null;
     private InputStream in = null;
     private InputStream videoIn = null;
+    private boolean statu;
+    private String temperature;
+    private String humidity;
 
     public void init(String HOST,int PORT) throws IOException, Exception{
         this.socket = new Socket(HOST,PORT);
         this.out = socket.getOutputStream();
         this.in = socket.getInputStream();
+        statu = true;
+        temperature = null;
+        humidity = null;
     }
 
     public void initVSocket(String HOST,int PORT) throws IOException, Exception{
@@ -64,5 +70,25 @@ public class ApplicationUtil extends Application {
 
     public void setIn(InputStream in) {
         this.in = in;
+    }
+
+    public boolean geiStatu(){
+        return statu;
+    }
+    public void setStatu(boolean statu){
+        this.statu = statu;
+    }
+
+    public String getTemperature() {
+        return temperature;
+    }
+    public void setTemperature(String temperature){
+        this.temperature = temperature;
+    }
+    public String getHumidity(){
+        return humidity;
+    }
+    public void setHumidity(String humidity){
+        this.humidity = humidity;
     }
 }

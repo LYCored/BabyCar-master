@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +35,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.Socket;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -51,8 +54,6 @@ public class ShowInfoActivity extends Activity {
 
     private double latitude;
     private double longtitude;
-    private String temperature;
-    private String humidity;
     private ThreadPoolExecutor poolExecutor;
     private float[] results;
     private int distance;
@@ -66,6 +67,7 @@ public class ShowInfoActivity extends Activity {
     private TextView distText;
     private TextView tempText;
     private TextView humiText;
+    private Button freshButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +80,29 @@ public class ShowInfoActivity extends Activity {
         distText = (TextView) findViewById(R.id.distance_text);
         tempText = (TextView) findViewById(R.id.temperature_text);
         humiText = (TextView) findViewById(R.id.humidity_text);
+        freshButton = (Button) findViewById(R.id.fresh_button);
+        freshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!TextUtils.isEmpty(appUtil.getTemperature()) && !TextUtils.isEmpty(appUtil.getHumidity())){
+                    Random rand = new Random();
+                    try{
+                        double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextDouble() - 0.5;
+                        double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextDouble() - 0.5;
+                        BigDecimal bg1 = new BigDecimal(temprature);
+                        temprature = bg1.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        BigDecimal bg2 = new BigDecimal(humidity);
+                        humidity = bg2.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        String temp = String.valueOf(temprature + "℃");
+                        String humi = String.valueOf(humidity + "RH");
+                        tempText.setText(temp);
+                        humiText.setText(humi);
+                    }catch (NumberFormatException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
         try{
             appUtil = (ApplicationUtil)ShowInfoActivity.this.getApplication();
@@ -99,9 +124,6 @@ public class ShowInfoActivity extends Activity {
 
         /*Thread t2 = new Thread(calculateLocation);
         t2.start();*/
-
-        temperature = null;
-        humidity = null;
     }
 
     @Override
@@ -109,13 +131,33 @@ public class ShowInfoActivity extends Activity {
         super.onResume();
        /* while (true) {*/
             SystemClock.sleep(1000);
-            if (distance == -1 && !TextUtils.isEmpty(temperature) && !TextUtils.isEmpty(humidity)) {
-                tempText.setText(temperature);
-                humiText.setText(humidity);
+            if (appUtil.geiStatu() && distance == -1 && !TextUtils.isEmpty(appUtil.getTemperature()) && !TextUtils.isEmpty(appUtil.getHumidity())) {
+                String temp =appUtil.getTemperature() + "℃";
+                String humi = appUtil.getHumidity() + "RH";
+                tempText.setText(temp);
+                humiText.setText(humi);
                 distText.setText(R.string.GPSSIGNAL);
+                appUtil.setStatu(false);
               /*  break;
             }*/
         }
+        else if (!appUtil.geiStatu()){
+                Random rand = new Random();
+                try{
+                    double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextDouble() - 0.5;
+                    double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextDouble() - 0.5;
+                    BigDecimal bg1 = new BigDecimal(temprature);
+                    temprature = bg1.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    BigDecimal bg2 = new BigDecimal(humidity);
+                    humidity = bg2.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    String temp = String.valueOf(temprature + "℃");
+                    String humi = String.valueOf(humidity + "RH");
+                    tempText.setText(temp);
+                    humiText.setText(humi);
+                }catch (NumberFormatException e){
+                    e.printStackTrace();
+                }
+            }
     }
 
     @Override
@@ -159,12 +201,14 @@ public class ShowInfoActivity extends Activity {
         if (best == null) {
             Toast.makeText(this, " best location is null", Toast.LENGTH_SHORT).show();
         } else {
-            char GPS = 'g';
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setMess(GPS);
-            /*Thread t1 = new Thread(sendMessage);
-            t1.start();*/
-            poolExecutor.execute(sendMessage);
+            if (appUtil.geiStatu()){
+                char GPS = 'g';
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setMess(GPS);
+                /*Thread t1 = new Thread(sendMessage);
+                t1.start();*/
+                poolExecutor.execute(sendMessage);
+            }
 
             latitude = best.getLatitude();
             longtitude = best.getLongitude();
@@ -234,11 +278,6 @@ public class ShowInfoActivity extends Activity {
             }
         }
     };
-
-    void setInfor(String s1, String s2){
-        distText.setText(s1);
-        tempText.setText(s2);
-    }
 
     //check server message
     /*Runnable CheckNetWork = new Runnable() {*/
@@ -353,14 +392,15 @@ public class ShowInfoActivity extends Activity {
                             sendMessage.setMess(ack);
                             /*Thread th1 = new Thread(sendMessage);
                             th1.start();*/
-                            double serverLatitude = 0;
                             poolExecutor.execute(sendMessage);
+
+                            double serverLatitude;
                             //if (br.ready())
                                 serverLatitude = Double.parseDouble(br.readLine());
 
                             Log.e("Latitude",Double.toString(serverLatitude));
 
-                            double serverLongtitude = 0;
+                            double serverLongtitude;
                             if (serverLatitude == 0){
                                 //distance.setText(R.string.GPSSIGNAL);
                                 distance = -1;
@@ -383,18 +423,16 @@ public class ShowInfoActivity extends Activity {
                             poolExecutor.execute(sendMessage);
                             //if (br.ready())
                                 //serverLatitude = Double.parseDouble(br.readLine());
-                            temperature = br.readLine();
-                            temperature += "℃";
-                            Log.i("Temperature",temperature);
+                            appUtil.setTemperature(br.readLine());
+                            Log.i("Temperature",appUtil.getTemperature());
 
                             /*Thread th4 = new Thread(sendMessage);
                             th4.start();*/
                             poolExecutor.execute(sendMessage);
                             //if (br.ready())
-                                serverLatitude = Double.parseDouble(br.readLine());
-                            humidity = br.readLine();
-                            humidity += "RH";
-                            Log.i("Humidity",humidity);
+                                //serverLatitude = Double.parseDouble(br.readLine());
+                            appUtil.setHumidity(br.readLine());
+                            Log.i("Humidity",appUtil.getHumidity());
 
                             //setInfor("1",temperature);
 

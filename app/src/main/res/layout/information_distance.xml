@@ -25,7 +25,7 @@
                 android:layout_gravity="end"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"
-                android:text="NO SIGNAL" />
+                android:text="@string/GPSSIGNAL" />
 
         </LinearLayout>
 
