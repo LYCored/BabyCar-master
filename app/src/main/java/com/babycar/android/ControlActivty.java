@@ -114,22 +114,24 @@ public class ControlActivty extends Activity {
         try{
             InputStream inputStream = null;
             videoUrl = new URL(url);
+            Log.w("Test message","videoUrl is correct!");
             httpURLConnection = (HttpURLConnection)videoUrl.openConnection();
             httpURLConnection.setDoInput(true);
             httpURLConnection.connect();
+            Log.w("Test message","httpURLConnection is correct!");
             inputStream = httpURLConnection.getInputStream();
             //InputStream inputStream = videoSocket.getInputStream();
-            Log.i("Test message","InputStream is correct!");
+            Log.w("Test message","InputStream is correct!");
             bmp = BitmapFactory.decodeStream(inputStream);
-            Log.i("Test message","Bitmap is correct!");
+            Log.w("Test message","Bitmap is correct!");
             canvas = holder.lockCanvas();
-            Log.i("Test message","Lock Canvas is correct!");
+            Log.w("Test message","Lock Canvas is correct!");
             canvas.drawColor(Color.WHITE);
             RectF rectF = new RectF(0,0,width,height);
             canvas.drawBitmap(bmp,null,rectF,null);
-            Log.i("Test message","Drawer is correct!");
+            Log.w("Test message","Drawer is correct!");
             holder.unlockCanvasAndPost(canvas);
-            Log.i("Test message","Display is correct!");
+            Log.w("Test message","Display is correct!");
             //httpURLConnection.disconnect();
         }catch (Exception e1){
             Toast.makeText(ControlActivty.this,"视频传输出现错误,返回上一级",Toast.LENGTH_LONG).show();

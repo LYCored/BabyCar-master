@@ -31,6 +31,72 @@
                 android:layout_height="wrap_content">
             </include>
 
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+            <include
+                layout="@layout/information_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </include>
+
         </LinearLayout>
 
     </ScrollView>

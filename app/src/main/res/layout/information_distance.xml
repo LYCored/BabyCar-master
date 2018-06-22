@@ -24,16 +24,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:textColor="@color/colorPrimary"
-                android:textSize="60sp"
-                android:text="39℃/49" />
-            <TextView
-                android:id="@+id/status_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:textColor="@color/colorPrimary"
                 android:textSize="20sp"
-                android:text="normal"/>
+                android:text="NO SIGNAL" />
 
         </LinearLayout>
 

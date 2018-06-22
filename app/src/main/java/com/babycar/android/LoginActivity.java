@@ -235,10 +235,10 @@ public class LoginActivity extends AppCompatActivity{
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            //String HostIP = GetIP.getText().toString();
-            //int HostPort =Integer.parseInt( GetPort.getText().toString());
-            String HostIP = "192.168.43.206";
-            int HostPort = 8888;
+            String HostIP = GetIP.getText().toString();
+            int HostPort =Integer.parseInt( GetPort.getText().toString());
+            //String HostIP = "192.168.43.206";
+            //int HostPort = 8888;
             appUtil = ((ApplicationUtil)getApplication());
             try{
                 appUtil.init(HostIP,HostPort);

@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,13 +15,19 @@ import android.location.Criteria;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.CardView;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +35,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 
@@ -43,6 +53,9 @@ public class ShowInfoActivity extends Activity {
     private double longtitude;
     private String temperature;
     private String humidity;
+    private ThreadPoolExecutor poolExecutor;
+    private float[] results;
+    private int distance;
     //private byte[] send;
 
     /**
@@ -50,14 +63,21 @@ public class ShowInfoActivity extends Activity {
      * UI组件
      */
 
-    private TextView distance;
+    private TextView distText;
+    private TextView tempText;
+    private TextView humiText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_info);
 
-        distance = (TextView) findViewById(R.id.distance_text);
+        poolExecutor = new ThreadPoolExecutor(3, 5,
+                1, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(128));
+
+        distText = (TextView) findViewById(R.id.distance_text);
+        tempText = (TextView) findViewById(R.id.temperature_text);
+        humiText = (TextView) findViewById(R.id.humidity_text);
 
         try{
             appUtil = (ApplicationUtil)ShowInfoActivity.this.getApplication();
@@ -68,8 +88,10 @@ public class ShowInfoActivity extends Activity {
             e1.printStackTrace();
         }
 
-        Thread t3 = new Thread(CheckNetWork);
-        t3.start();
+        CheckNetWork checkNetWork = new CheckNetWork(this);
+        poolExecutor.execute(checkNetWork);
+        /*Thread t3 = new Thread(CheckNetWork);
+        t3.start();*/
 
         Intent intent = getIntent();
         permissionflag = intent.getBundleExtra("Data").getBoolean("permissionflag",false);
@@ -77,6 +99,23 @@ public class ShowInfoActivity extends Activity {
 
         /*Thread t2 = new Thread(calculateLocation);
         t2.start();*/
+
+        temperature = null;
+        humidity = null;
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+       /* while (true) {*/
+            SystemClock.sleep(1000);
+            if (distance == -1 && !TextUtils.isEmpty(temperature) && !TextUtils.isEmpty(humidity)) {
+                tempText.setText(temperature);
+                humiText.setText(humidity);
+                distText.setText(R.string.GPSSIGNAL);
+              /*  break;
+            }*/
+        }
     }
 
     @Override
@@ -123,14 +162,15 @@ public class ShowInfoActivity extends Activity {
             char GPS = 'g';
             SendMessage sendMessage = new SendMessage();
             sendMessage.setMess(GPS);
-            Thread t1 = new Thread(sendMessage);
-            t1.start();
+            /*Thread t1 = new Thread(sendMessage);
+            t1.start();*/
+            poolExecutor.execute(sendMessage);
 
             latitude = best.getLatitude();
             longtitude = best.getLongitude();
             //send = String.valueOf(latitude).getBytes();
             //out.writeDouble(latitude);
-            Toast.makeText(this, "best location: lat==" + best.getLatitude() + " lng==" + best.getLongitude(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "best location: lat==" + best.getLatitude() + " lng==" + best.getLongitude(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -195,8 +235,19 @@ public class ShowInfoActivity extends Activity {
         }
     };
 
+    void setInfor(String s1, String s2){
+        distText.setText(s1);
+        tempText.setText(s2);
+    }
+
     //check server message
-    Runnable CheckNetWork = new Runnable() {
+    /*Runnable CheckNetWork = new Runnable() {*/
+    class CheckNetWork implements Runnable {
+        Context context;
+        public CheckNetWork(Context context){
+            this.context = context;
+        }
+
         @Override
         public void run() {
             try{
@@ -270,8 +321,8 @@ public class ShowInfoActivity extends Activity {
                             manager.notify(1,notification);
                             break;
                         case"115":
-                            float[] results = new float[1];
-                            notification = new NotificationCompat.Builder(ShowInfoActivity.this)
+                            results = new float[1];
+                            /*notification = new NotificationCompat.Builder(ShowInfoActivity.this)
                                     .setContentTitle("BabyCar Warning")
                                     .setContentText("115警报")
                                     .setWhen(System.currentTimeMillis())
@@ -282,40 +333,81 @@ public class ShowInfoActivity extends Activity {
                                     .setVibrate(vir)
                                     .setAutoCancel(true)
                                     .build();
-                            manager.notify(1,notification);
+                            manager.notify(1,notification);*/
+
+                            //Toast.makeText(context,"11111",Toast.LENGTH_LONG).show();
+
+                            /*AlertDialog.Builder builder = new AlertDialog.Builder(ShowInfoActivity.this);
+                            builder.setView(View.inflate(ShowInfoActivity.this,R.layout.activity_show_info,null));
+                            AlertDialog dialog = builder.create();
+                            dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_TOAST);
+                            dialog.setCancelable(true);
+                            dialog.setTitle("信息显示");
+                            dialog.setMessage("TEST");
+                            dialog.show();*/
+                            /*if (dialog.isShowing())
+                                Log.e("TEST","AlertisShowing");*/
 
                             char ack = '0';
                             SendMessage sendMessage = new SendMessage();
                             sendMessage.setMess(ack);
-                            Thread th1 = new Thread(sendMessage);
-                            th1.start();
+                            /*Thread th1 = new Thread(sendMessage);
+                            th1.start();*/
+                            double serverLatitude = 0;
+                            poolExecutor.execute(sendMessage);
+                            //if (br.ready())
+                                serverLatitude = Double.parseDouble(br.readLine());
 
-                            double serverLatitude = Double.parseDouble(br.readLine());
                             Log.e("Latitude",Double.toString(serverLatitude));
 
-                            double serverLongtitude;
+                            double serverLongtitude = 0;
                             if (serverLatitude == 0){
                                 //distance.setText(R.string.GPSSIGNAL);
+                                distance = -1;
                             }
                             else {
-                                Thread th2 = new Thread(sendMessage);
-                                th2.start();
-
+                                /*Thread th2 = new Thread(sendMessage);
+                                th2.start();*/
+                                poolExecutor.execute(sendMessage);
+                                //if (br.ready())
+                                    //serverLatitude = Double.parseDouble(br.readLine());
                                 serverLongtitude = Double.parseDouble(br.readLine());
                                 Log.i("Longtitude",Double.toString(serverLongtitude));
                                 Location.distanceBetween(latitude,longtitude,serverLatitude,serverLongtitude,results);
+
                                 Log.i("distance",Double.toString(results[0]));
-                                distance.setText("" + results[0]);
+                                //distText.setText("" + results[0]);
                             }
-                            Thread th3 = new Thread(sendMessage);
-                            th3.start();
+                            /*Thread th3 = new Thread(sendMessage);
+                            th3.start();*/
+                            poolExecutor.execute(sendMessage);
+                            //if (br.ready())
+                                //serverLatitude = Double.parseDouble(br.readLine());
                             temperature = br.readLine();
+                            temperature += "℃";
                             Log.i("Temperature",temperature);
 
-                            Thread th4 = new Thread(sendMessage);
-                            th4.start();
+                            /*Thread th4 = new Thread(sendMessage);
+                            th4.start();*/
+                            poolExecutor.execute(sendMessage);
+                            //if (br.ready())
+                                serverLatitude = Double.parseDouble(br.readLine());
                             humidity = br.readLine();
+                            humidity += "RH";
                             Log.i("Humidity",humidity);
+
+                            //setInfor("1",temperature);
+
+                            /*builder= new AlertDialog.Builder(ShowInfoActivity.this);
+                            builder.setTitle("信息显示");
+                            builder.setMessage("温度:" + temperature + "\n湿度:" + humidity + "\n距离:" + results[0]);
+                            builder.show();*/
+
+                            //Toast.makeText(ShowInfoActivity.this,"distance:" + distance + "  temperature:" + temperature + "  humidity:" + humidity,Toast.LENGTH_SHORT).show();
+                            /*appUtil.init("192.168.43.206",8888);
+                            socket = appUtil.getSocket();
+                            out = appUtil.getOut();
+                            is = socket.getInputStream();*/
 
                             break;
                     }
