@@ -87,8 +87,8 @@ public class ShowInfoActivity extends Activity {
                 if (!TextUtils.isEmpty(appUtil.getTemperature()) && !TextUtils.isEmpty(appUtil.getHumidity())){
                     Random rand = new Random();
                     try{
-                        double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextDouble() - 0.5;
-                        double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextDouble() - 0.5;
+                        double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextInt(3) - 1;
+                        double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextInt(3) - 1;
                         BigDecimal bg1 = new BigDecimal(temprature);
                         temprature = bg1.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
                         BigDecimal bg2 = new BigDecimal(humidity);
@@ -144,8 +144,8 @@ public class ShowInfoActivity extends Activity {
         else if (!appUtil.geiStatu()){
                 Random rand = new Random();
                 try{
-                    double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextDouble() - 0.5;
-                    double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextDouble() - 0.5;
+                    double temprature = Double.parseDouble(appUtil.getTemperature()) + rand.nextInt(3) - 1;
+                    double humidity = Double.parseDouble(appUtil.getHumidity()) + rand.nextInt(3) - 1;
                     BigDecimal bg1 = new BigDecimal(temprature);
                     temprature = bg1.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
                     BigDecimal bg2 = new BigDecimal(humidity);

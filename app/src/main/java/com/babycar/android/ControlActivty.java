@@ -106,7 +106,8 @@ public class ControlActivty extends Activity {
 
     private void draw(){
         //getSeverIP
-        String url = "http://192.168.43.206:8080/?action=snapshot";
+        //String url = "http://192.168.43.206:8080/?action=snapshot";
+        String url = "http://" + appUtil.getHOST() + ":" + appUtil.getPORT() + "/?action=snapshot";
         URL videoUrl;
         HttpURLConnection httpURLConnection;
         Bitmap bmp;

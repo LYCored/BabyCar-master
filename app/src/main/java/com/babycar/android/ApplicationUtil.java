@@ -20,6 +20,8 @@ public class ApplicationUtil extends Application {
     private boolean statu;
     private String temperature;
     private String humidity;
+    private String HOST;
+    private int PORT;
 
     public void init(String HOST,int PORT) throws IOException, Exception{
         this.socket = new Socket(HOST,PORT);
@@ -28,6 +30,8 @@ public class ApplicationUtil extends Application {
         statu = true;
         temperature = null;
         humidity = null;
+        this.HOST = HOST;
+        this.PORT = PORT;
     }
 
     public void initVSocket(String HOST,int PORT) throws IOException, Exception{
@@ -90,5 +94,12 @@ public class ApplicationUtil extends Application {
     }
     public void setHumidity(String humidity){
         this.humidity = humidity;
+    }
+
+    public String getHOST(){
+        return HOST;
+    }
+    public int getPORT(){
+        return PORT;
     }
 }
